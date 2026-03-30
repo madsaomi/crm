@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}KPI Преподавателей{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-bar-chart me-2" style="color: var(--accent);"></i>KPI Преподавателей</h1>
+</div>
+
+{% if data %}
+<div class="row g-4 mb-4">
+    {% for item in data %}
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-person-badge me-2"></i>{{ item.teacher.name }}</span>
+                <span class="badge badge-accent">{{ item.groups_count }} групп</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-4">
+                        <div class="stat-card" style="padding: 0.75rem;">
+                            <div class="stat-value" style="font-size: 1.3rem;">{{ item.total_students }}</div>
+                            <div class="stat-label">Всего</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-card" style="padding: 0.75rem;">
+                            <div class="stat-value" style="font-size: 1.3rem; color: var(--success);">{{ item.active_students }}</div>
+                            <div class="stat-label">Активных</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-card" style="padding: 0.75rem;">
+                            <div class="stat-value" style="font-size: 1.3rem; color: var(--accent);">{{ item.attendance_rate }}%</div>
+                            <div class="stat-label">Посещ.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small style="color: var(--text-secondary);">Посещаемость</small>
+                        <small><strong>{{ item.attendance_rate }}%</strong></small>
+                    </div>
+                    <div class="kpi-bar">
+                        <div class="kpi-bar-fill" {% if item.attendance_rate >= 70 %}style="width: {{ item.attendance_rate }}%; background: var(--success);"{% elif item.attendance_rate >= 40 %}style="width: {{ item.attendance_rate }}%; background: var(--warning);"{% else %}style="width: {{ item.attendance_rate }}%; background: var(--danger);"{% endif %}></div>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small style="color: var(--text-secondary);">Удержание студентов</small>
+                        <small><strong>{{ item.retention_rate }}%</strong></small>
+                    </div>
+                    <div class="kpi-bar">
+                        <div class="kpi-bar-fill" {% if item.retention_rate >= 70 %}style="width: {{ item.retention_rate }}%; background: var(--success);"{% elif item.retention_rate >= 40 %}style="width: {{ item.retention_rate }}%; background: var(--warning);"{% else %}style="width: {{ item.retention_rate }}%; background: var(--danger);"{% endif %}></div>
+                    </div>
+                </div>
+
+                <div class="mb-0">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small style="color: var(--text-secondary);">Процент задолженности</small>
+                        <small><strong>{{ item.debt_percentage }}%</strong></small>
+                    </div>
+                    <div class="kpi-bar">
+                        <div class="kpi-bar-fill" {% if item.debt_percentage <= 20 %}style="width: {{ item.debt_percentage }}%; background: var(--success);"{% elif item.debt_percentage <= 50 %}style="width: {{ item.debt_percentage }}%; background: var(--warning);"{% else %}style="width: {{ item.debt_percentage }}%; background: var(--danger);"{% endif %}></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5" style="color: var(--text-secondary);">
+        Нет данных. <a href="{{ url_for('teachers.create_teacher') }}" style="color: var(--accent);">Добавьте преподавателей</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

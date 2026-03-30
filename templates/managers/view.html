@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Профиль: {{ manager.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-briefcase me-2" style="color: var(--accent);"></i>{{ manager.name }}</h1>
+    <a href="{{ url_for('managers.list_managers') }}" class="btn btn-outline-light">
+        <i class="bi bi-arrow-left me-1"></i> Назад
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card stat-card mb-3">
+            <div class="stat-value text-accent">{{ manager.students|length }}</div>
+            <div class="stat-label">Студентов</div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header border-bottom border-custom pb-3">
+                <i class="bi bi-people me-2" style="color: var(--accent);"></i> Студенты менеджера
+            </div>
+            <div class="card-body p-0">
+                <div style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-dark mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Имя</th>
+                                <th>Телефон</th>
+                                <th>Групп</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for s in manager.students %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td><a href="{{ url_for('students.view_student', student_id=s.id) }}" style="color: var(--accent); text-decoration: none; font-weight: 500;">{{ s.name }}</a></td>
+                                <td>{{ s.phone or '—' }}</td>
+                                <td><span class="badge badge-accent">{{ s.enrollments|selectattr('active')|list|length }}</span></td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="4" class="text-center py-4 text-muted-custom">Нет студентов</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

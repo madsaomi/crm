@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>
+        <i class="bi bi-collection me-2" style="color: var(--accent);"></i>{{ group.name }}
+    </h1>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('attendance.mark_attendance', group_id=group.id) }}" class="btn btn-outline-light">
+            <i class="bi bi-calendar-check me-1"></i> Отметить посещаемость
+        </a>
+        <a href="{{ url_for('groups.edit_group', group_id=group.id) }}" class="btn btn-outline-light">
+            <i class="bi bi-pencil me-1"></i> Редактировать
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value" style="font-size: 1.3rem;">{{ group.teacher.name if group.teacher else '—' }}</div>
+            <div class="stat-label">Преподаватель</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value" style="font-size: 1.3rem;">{{ 'Чётная' if group.schedule_type == 'even' else 'Нечётная' }}</div>
+            <div class="stat-label">Расписание</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value" style="font-size: 1.3rem;">{{ group.room or '—' }}</div>
+            <div class="stat-label">Кабинет</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.0f"|format(group.monthly_fee) }} ₸</div>
+            <div class="stat-label">Стоимость/мес</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-people me-2"></i>Студенты в группе
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-dark mb-0">
+                    <thead><tr><th>Имя</th><th>Телефон</th><th>Статус</th><th></th></tr></thead>
+                    <tbody>
+                    {% for e in enrollments %}
+                        <tr>
+                            <td><a href="{{ url_for('students.view_student', student_id=e.student.id) }}" style="color: var(--accent); text-decoration: none;">{{ e.student.name }}</a></td>
+                            <td>{{ e.student.phone or '—' }}</td>
+                            <td>
+                                {% if e.active %}
+                                    <span class="badge badge-success">Активен</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Отчислен</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if e.active %}
+                                <form method="POST" action="{{ url_for('groups.unenroll_student', group_id=group.id, enrollment_id=e.id) }}" class="d-inline" onsubmit="return confirm('Отчислить студента?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="4" class="text-center py-3" style="color: var(--text-secondary);">Нет студентов</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-person-plus me-2"></i>Добавить студента
+            </div>
+            <div class="card-body">
+                {% if available_students %}
+                <form method="POST" action="{{ url_for('groups.enroll_student', group_id=group.id) }}">
+                    <div class="mb-3">
+                        <select name="student_id" class="form-select" required>
+                            <option value="">— Выберите —</option>
+                            {% for s in available_students %}
+                                <option value="{{ s.id }}">{{ s.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-accent w-100">
+                        <i class="bi bi-plus-lg me-1"></i> Зачислить
+                    </button>
+                </form>
+                {% else %}
+                <p class="mb-0 text-center" style="color: var(--text-secondary);">Все студенты уже в группе</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

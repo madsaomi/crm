@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Редактировать' if group else 'Создать' }} группу{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>
+        <i class="bi bi-{{ 'pencil' if group else 'plus-circle' }} me-2" style="color: var(--accent);"></i>
+        {{ 'Редактировать' if group else 'Создать' }} группу
+    </h1>
+</div>
+
+<div class="card" style="max-width: 600px;">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Название *</label>
+                <input type="text" name="name" class="form-control" value="{{ group.name if group else '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Преподаватель</label>
+                <select name="teacher_id" class="form-select">
+                    <option value="">— Не выбран —</option>
+                    {% for t in teachers %}
+                        <option value="{{ t.id }}" {% if group and group.teacher_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Расписание</label>
+                    <select name="schedule_type" class="form-select">
+                        <option value="even" {% if group and group.schedule_type == 'even' %}selected{% endif %}>Чётная</option>
+                        <option value="odd" {% if group and group.schedule_type == 'odd' %}selected{% endif %}>Нечётная</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Время</label>
+                    <input type="time" name="start_time" class="form-control" value="{{ group.start_time if group and group.start_time else '18:00' }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Кабинет</label>
+                    <input type="text" name="room" class="form-control" value="{{ group.room if group else '' }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Стоимость/мес (₸)</label>
+                    <input type="number" name="monthly_fee" class="form-control" step="0.01" value="{{ group.monthly_fee if group else '0' }}">
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-accent">
+                    <i class="bi bi-check-lg me-1"></i> {{ 'Сохранить' if group else 'Создать' }}
+                </button>
+                <a href="{{ url_for('groups.list_groups') }}" class="btn btn-outline-light">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

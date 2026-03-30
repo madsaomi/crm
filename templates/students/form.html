@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Редактировать' if student else 'Добавить' }} студента{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>
+        <i class="bi bi-{{ 'pencil' if student else 'person-plus' }} me-2" style="color: var(--accent);"></i>
+        {{ 'Редактировать' if student else 'Добавить' }} студента
+    </h1>
+</div>
+
+<div class="card" style="max-width: 600px;">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Имя *</label>
+                <input type="text" name="name" class="form-control" value="{{ student.name if student else '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Телефон</label>
+                <input type="text" name="phone" class="form-control" value="{{ student.phone if student else '' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Менеджер</label>
+                <select name="manager_id" class="form-select">
+                    <option value="">— Не выбран —</option>
+                    {% for m in managers %}
+                        <option value="{{ m.id }}" {% if student and student.manager_id == m.id %}selected{% endif %}>{{ m.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-accent">
+                    <i class="bi bi-check-lg me-1"></i> {{ 'Сохранить' if student else 'Добавить' }}
+                </button>
+                <a href="{{ url_for('students.list_students') }}" class="btn btn-outline-light">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ student.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>
+        <i class="bi bi-person me-2" style="color: var(--accent);"></i>{{ student.name }}
+    </h1>
+    <a href="{{ url_for('students.edit_student', student_id=student.id) }}" class="btn btn-outline-light">
+        <i class="bi bi-pencil me-1"></i> Редактировать
+    </a>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value" style="font-size: 1.3rem;">{{ student.phone or '—' }}</div>
+            <div class="stat-label">Телефон</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value" style="font-size: 1.3rem;">{{ student.manager.name if student.manager else '—' }}</div>
+            <div class="stat-label">Менеджер</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.0f"|format(total_paid) }} so'm</div>
+            <div class="stat-label">Оплачено</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value" {% if debt > 0 %}style="color: var(--danger);"{% else %}style="color: var(--success);"{% endif %}>{{ "%.0f"|format(debt) }} so'm</div>
+            <div class="stat-label">Долг</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-collection me-2"></i>Группы
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-dark mb-0">
+                    <thead><tr><th>Группа</th><th>Статус</th></tr></thead>
+                    <tbody>
+                    {% for e in enrollments %}
+                        <tr>
+                            <td>{{ e.group.name }}</td>
+                            <td>
+                                {% if e.active %}
+                                    <span class="badge badge-success">Активен</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Отчислен</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="2" class="text-center py-3" style="color: var(--text-secondary);">Не записан ни в одну группу</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-credit-card me-2"></i>Оплаты</span>
+                <a href="{{ url_for('payments.create_payment', student_id=student.id) }}" class="btn btn-sm btn-accent">
+                    <i class="bi bi-plus-lg"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-dark mb-0">
+                    <thead><tr><th>Сумма</th><th>Дата</th><th>Описание</th></tr></thead>
+                    <tbody>
+                    {% for p in student.payments|sort(attribute='date', reverse=true) %}
+                        <tr>
+                            <td><span class="badge badge-accent">{{ "%.0f"|format(p.amount) }} so'm</span></td>
+                            <td>{{ p.date.strftime('%d.%m.%Y') }}</td>
+                            <td>{{ p.description or '—' }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="3" class="text-center py-3" style="color: var(--text-secondary);">Нет оплат</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

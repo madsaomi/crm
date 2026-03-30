@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}Журнал — {{ group.name }} — {{ month_name }} {{ year }}{% endblock %}
+{% block content %}
+<style>
+    .monthly-table {
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+    .monthly-table th, .monthly-table td {
+        padding: 0.4rem 0.35rem !important;
+        text-align: center;
+        min-width: 36px;
+    }
+    .monthly-table th.student-name, .monthly-table td.student-name {
+        text-align: left;
+        min-width: 180px;
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        position: sticky;
+        left: 0;
+        background: var(--bg-card);
+        z-index: 2;
+    }
+    .monthly-table thead th.student-name {
+        z-index: 3;
+    }
+    .day-even { background: var(--even-day) !important; }
+    .day-odd { background: var(--odd-day) !important; }
+    .day-header-even { background: var(--info-bg) !important; color: var(--info) !important; font-weight: 700 !important; }
+    .day-header-odd { background: var(--warning-bg) !important; color: var(--warning) !important; font-weight: 700 !important; }
+    .att-present {
+        color: var(--success);
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    .att-absent {
+        color: var(--danger);
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    .att-empty {
+        color: var(--border-color);
+        font-size: 0.7rem;
+    }
+    .rate-good { color: var(--success); font-weight: 700; }
+    .rate-warn { color: var(--warning); font-weight: 700; }
+    .rate-bad { color: var(--danger); font-weight: 700; }
+</style>
+
+<div class="page-header">
+    <h1>
+        <i class="bi bi-journal-text me-2" style="color: var(--accent);"></i>
+        Журнал — {{ group.name }}
+    </h1>
+    <div class="d-flex gap-2 align-items-center">
+        <a href="{{ url_for('attendance.monthly_attendance', group_id=group.id, year=prev_year, month=prev_month) }}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+        <span style="font-weight: 600; min-width: 140px; text-align: center;">{{ month_name }} {{ year }}</span>
+        <a href="{{ url_for('attendance.monthly_attendance', group_id=group.id, year=next_year, month=next_month) }}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+    </div>
+</div>
+
+<div class="d-flex gap-3 mb-3 flex-wrap">
+    <div class="d-flex align-items-center gap-2">
+        <span style="width: 12px; height: 12px; border-radius: 3px; background: var(--info); display: inline-block;"></span>
+        <small style="color: var(--text-secondary); font-weight: 600;">Чётные дни</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span style="width: 12px; height: 12px; border-radius: 3px; background: var(--warning); display: inline-block;"></span>
+        <small style="color: var(--text-secondary); font-weight: 600;">Нечётные дни</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span style="color: var(--success); font-size: 0.9rem;">✓</span>
+        <small style="color: var(--text-secondary); font-weight: 600;">Присутствует</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span style="color: var(--danger); font-size: 0.9rem;">✗</span>
+        <small style="color: var(--text-secondary); font-weight: 600;">Отсутствует</small>
+    </div>
+    {% if session.get('role') == 'teacher' %}
+    <a href="{{ url_for('attendance.mark_attendance', group_id=group.id) }}" class="btn btn-accent btn-sm ms-auto">
+        <i class="bi bi-plus-lg me-1"></i> Отметить
+    </a>
+    {% endif %}
+</div>
+
+{% if students %}
+<div class="card">
+    <div class="card-body p-0">
+        <div style="overflow-x: auto;">
+            <table class="table table-dark monthly-table mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">#</th>
+                        <th class="student-name">Студент</th>
+                        {% for day, wd in days %}
+                        <th class="{% if group.schedule_type == 'even' %}day-header-even{% else %}day-header-odd{% endif %}">{{ day }} {{ wd }}</th>
+                        {% endfor %}
+                        <th style="background: var(--accent-subtle); color: var(--accent); font-weight: 700; min-width: 60px;">%</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for student in students %}
+                    <tr>
+                        <td style="text-align: center; color: var(--text-secondary);">{{ loop.index }}</td>
+                        <td class="student-name" title="{{ student.name }}">
+                            <a href="{{ url_for('students.view_student', student_id=student.id) }}" style="color: var(--text-primary); text-decoration: none;">
+                                {{ student.name }}
+                            </a>
+                        </td>
+                        {% for day, wd in days %}
+                        {% set key = (student.id, day) %}
+                        {% set record = att_map.get(key) %}
+                        <td class="{% if group.schedule_type == 'even' %}day-even{% else %}day-odd{% endif %}"
+                            {% if session.get('role') == 'teacher' %}
+                            style="cursor: pointer;"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editModal"
+                            data-id="{{ student.id }}"
+                            data-name="{{ student.name }}"
+                            data-day="{{ day }}"
+                            data-status="{{ record.status if record else '' }}"
+                            data-comment="{{ record.comment if record and record.comment else '' }}"
+                            onclick="openEdit(this)"
+                            {% endif %}
+                            >
+                            {% if record %}
+                                {% if record.status == 'present' %}
+                                    <span class="att-present" {% if record.comment %}title="{{ record.comment }}" data-bs-toggle="tooltip"{% endif %}>✓</span>
+                                {% else %}
+                                    <span class="att-absent" {% if record.comment %}title="{{ record.comment }}" data-bs-toggle="tooltip"{% endif %}>✗</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="att-empty">·</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td style="background: var(--accent-subtle);">
+                            {% set stats = student_stats[student.id] %}
+                            <span class="{% if stats.rate >= 70 %}rate-good{% elif stats.rate >= 40 %}rate-warn{% else %}rate-bad{% endif %}">
+                                {{ stats.rate }}%
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5" style="color: var(--text-secondary);">
+        В группе нет активных студентов.
+        <a href="{{ url_for('groups.view_group', group_id=group.id) }}" style="color: var(--accent);">Зачислите студентов</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px;">
+            <form method="POST" action="{{ url_for('attendance.update_attendance') }}">
+                <input type="hidden" name="group_id" value="{{ group.id }}">
+                <input type="hidden" name="month" value="{{ month }}">
+                <input type="hidden" name="year" value="{{ year }}">
+                <input type="hidden" name="student_id" id="modal_student_id">
+                <input type="hidden" name="day" id="modal_day">
+
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title" style="font-weight: 700;">
+                        <i class="bi bi-pencil-square me-2" style="color: var(--accent);"></i>
+                        <span id="modal_title">Редактировать</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Статус</label>
+                        <div class="d-flex gap-3">
+                            <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
+                                <input type="radio" name="status" value="present" id="modal_present" class="form-check-input" style="width: 20px; height: 20px;">
+                                <span style="color: var(--success); font-weight: 600;">✓ Присутствует</span>
+                            </label>
+                            <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
+                                <input type="radio" name="status" value="absent" id="modal_absent" class="form-check-input" style="width: 20px; height: 20px;">
+                                <span style="color: var(--danger); font-weight: 600;">✗ Отсутствует</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">Комментарий</label>
+                        <textarea name="comment" id="modal_comment" class="form-control" rows="2"
+                                  placeholder="Причина отсутствия, опоздание и т.д."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-accent">
+                        <i class="bi bi-check-lg me-1"></i> Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openEdit(elem) {
+        var studentId = elem.getAttribute('data-id');
+        var studentName = elem.getAttribute('data-name');
+        var day = elem.getAttribute('data-day');
+        var status = elem.getAttribute('data-status');
+        var comment = elem.getAttribute('data-comment');
+
+        document.getElementById('modal_student_id').value = studentId;
+        document.getElementById('modal_day').value = day;
+        document.getElementById('modal_title').textContent = studentName + ' — ' + day + ' {{ month_name }}';
+        document.getElementById('modal_comment').value = comment;
+
+        if (status === 'absent') {
+            document.getElementById('modal_absent').checked = true;
+        } else {
+            document.getElementById('modal_present').checked = true;
+        }
+    }
+
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function(el) {
+            new bootstrap.Tooltip(el);
+        });
+    });
+</script>
+{% endblock %}

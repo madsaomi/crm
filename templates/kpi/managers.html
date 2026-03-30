@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}KPI Менеджеров{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-graph-up me-2" style="color: var(--accent);"></i>KPI Менеджеров</h1>
+</div>
+
+{% if data %}
+<div class="row g-4 mb-4">
+    {% for item in data %}
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-briefcase me-2"></i>{{ item.manager.name }}</span>
+                <span class="badge badge-accent">{{ item.total_students }} студентов</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <div class="stat-card" style="padding: 0.75rem;">
+                            <div class="stat-value" style="font-size: 1.5rem;">{{ "%.0f"|format(item.total_revenue) }} so'm</div>
+                            <div class="stat-label">Выручка</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-card" style="padding: 0.75rem;">
+                            <div class="stat-value" {% if item.total_debt > 0 %}style="font-size: 1.5rem; color: var(--danger);"{% else %}style="font-size: 1.5rem; color: var(--success);"{% endif %}>{{ "%.0f"|format(item.total_debt) }} so'm</div>
+                            <div class="stat-label">Задолженность</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small style="color: var(--text-secondary);">Конверсия (оплатившие / все)</small>
+                        <small><strong>{{ item.conversion_rate }}%</strong> ({{ item.paid_students }}/{{ item.total_students }})</small>
+                    </div>
+                    <div class="kpi-bar">
+                        <div class="kpi-bar-fill" {% if item.conversion_rate >= 70 %}style="width: {{ item.conversion_rate }}%; background: var(--success);"{% elif item.conversion_rate >= 40 %}style="width: {{ item.conversion_rate }}%; background: var(--warning);"{% else %}style="width: {{ item.conversion_rate }}%; background: var(--danger);"{% endif %}></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5" style="color: var(--text-secondary);">
+        Нет данных. <a href="{{ url_for('managers.create_manager') }}" style="color: var(--accent);">Добавьте менеджеров</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
