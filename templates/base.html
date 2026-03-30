@@ -212,6 +212,8 @@
         /* ═══════════════ PAGE HEADER ═══════════════ */
         .page-header {
             display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
@@ -675,6 +677,27 @@
             const saved = getTheme();
             updateThemeButton(saved);
         })();
+
+        // Auto-wrap tables for mobile responsiveness
+        document.addEventListener("DOMContentLoaded", function() {
+            const tables = document.querySelectorAll('.table:not(.table-responsive table)');
+            tables.forEach(table => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'table-responsive';
+                // Add styling to match card container if needed
+                table.style.margin = '0';
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
+            });
+            // Fix header action buttons layout on mobile
+            const headerActions = document.querySelectorAll('.page-header .d-flex');
+            headerActions.forEach(el => {
+                if(!el.classList.contains('flex-wrap')){
+                    el.classList.add('flex-wrap');
+                    el.style.gap = '0.5rem';
+                }
+            });
+        });
     </script>
     {% block scripts %}{% endblock %}
 </body>
